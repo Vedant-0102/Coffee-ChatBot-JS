@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrewBot - Coffee Shop Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* Chat container styling */
+        .chat-container {
+            height: 500px;
+            background-image: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: overlay;
+            background-color: rgba(245, 238, 230, 0.85);
+        }
+        
+        /* Message bubbles */
+        .bot-message {
+            border-radius: 18px 18px 18px 4px;
+            background-color: #6F4E37;
+        }
+        
+        .user-message {
+            border-radius: 18px 18px 4px 18px;
+            background-color: #C4A484;
+        }
+        
+        /* Smooth transitions */
+        .message {
+            transform-origin: bottom;
+            animation: messageAppear 0.3s ease-out;
+        }
+        
+        @keyframes messageAppear {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        
+        /* Typing indicator */
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background-color: #fff;
+            opacity: 0.4;
+        }
+        
+        .typing-dot:nth-child(1) {
+            animation: typing 1s infinite;
+        }
+        
+        .typing-dot:nth-child(2) {
+            animation: typing 1s infinite 0.2s;
+        }
+        
+        .typing-dot:nth-child(3) {
+            animation: typing 1s infinite 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 100% { opacity: 0.4; transform: translateY(0); }
+            50% { opacity: 1; transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-amber-50 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md mx-auto">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-full bg-amber-800 flex items-center justify-center text-amber-50 mr-3 floating">
+                    <i class="fas fa-mug-hot text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-amber-900">BrewBot</h1>
+                    <p class="text-xs text-amber-700">Your coffee shop assistant</p>
+                </div>
+            </div>
+            <div class="text-amber-700">
+                <i class="fas fa-ellipsis-v"></i>
+            </div>
+        </div>
+        
+        <!-- Chat container -->
+        <div class="chat-container rounded-2xl shadow-lg overflow-hidden flex flex-col">
+            <!-- Messages area -->
+            <div id="messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+                <!-- Welcome message -->
+                <div class="message bot-message text-white p-3 max-w-xs">
+                    <p>Hello there! ☕ I'm BrewBot, your personal coffee assistant. How can I help you today?</p>
+                </div>
+                
+                <!-- Suggestions -->
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <button onclick="sendQuickMessage('What are today\'s specials?')" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1 rounded-full transition">
+                        Today's specials
+                    </button>
+                    <button onclick="sendQuickMessage('What are your opening hours?')" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1 rounded-full transition">
+                        Opening hours
+                    </button>
+                    <button onclick="sendQuickMessage('Do you have vegan options?')" class="text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1 rounded-full transition">
+                        Vegan options
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Typing indicator (hidden by default) -->
+            <div id="typing-indicator" class="hidden px-4 pb-2">
+                <div class="bot-message text-white p-3 max-w-xs">
+                    <div class="flex space-x-1">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input area -->
+            <div class="p-4 border-t border-amber-200 bg-white">
+                <div class="flex items-center">
+                    <input 
+                        id="user-input" 
+                        type="text" 
+                        placeholder="Type your message..." 
+                        class="flex-1 bg-amber-50 rounded-full px-4 py-2 text-amber-900 focus:outline-none focus:ring-2 focus:ring-amber-300"
+                        onkeypress="handleKeyPress(event)"
+                    >
+                    <button 
+                        onclick="sendMessage()" 
+                        class="ml-2 w-10 h-10 rounded-full bg-amber-600 text-white flex items-center justify-center hover:bg-amber-700 transition"
+                    >
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                
+                <!-- Quick actions -->
+                <div class="flex justify-between mt-3 text-amber-600">
+                    <button onclick="showMenu()" class="flex items-center text-sm">
+                        <i class="fas fa-utensils mr-1"></i> Menu
+                    </button>
+                    <button onclick="showLocation()" class="flex items-center text-sm">
+                        <i class="fas fa-map-marker-alt mr-1"></i> Location
+                    </button>
+                    <button onclick="showRewards()" class="flex items-center text-sm">
+                        <i class="fas fa-star mr-1"></i> Rewards
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Coffee shop data
+        const coffeeShop = {
+            name: "Brew Haven",
+            hours: {
+                weekdays: "7:00 AM - 8:00 PM",
+                weekends: "8:00 AM - 9:00 PM"
+            },
+            location: "123 Coffee Lane, Beanville",
+            menu: {
+                "Espresso": "$3.50",
+                "Cappuccino": "$4.50",
+                "Latte": "$4.75",
+                "Americano": "$3.75",
+                "Mocha": "$5.00",
+                "Cold Brew": "$4.25",
+                "Flat White": "$4.50",
+                "Cortado": "$4.00"
+            },
+            specials: {
+                "Monday": "20% off all espresso drinks",
+                "Tuesday": "Free pastry with any large coffee",
+                "Wednesday": "Half-price pour overs",
+                "Thursday": "Buy one get one free cold brew",
+                "Friday": "Happy hour 3-5PM: $1 off all drinks",
+                "Saturday": "Free latte art with any milk-based drink",
+                "Sunday": "Family day: Kids drink free"
+            },
+            veganOptions: [
+                "Oat milk (+$0.75)",
+                "Almond milk (+$0.75)",
+                "Soy milk (+$0.50)",
+                "Coconut milk (+$0.75)",
+                "Vegan pastries available"
+            ]
+        };
+        
+        // Handle enter key press
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                sendMessage();
+            }
+        }
+        
+        // Send message from input
+        function sendMessage() {
+            const input = document.getElementById("user-input");
+            const message = input.value.trim();
+            
+            if (message) {
+                // Add user message to chat
+                addMessage(message, "user");
+                input.value = "";
+                
+                // Show typing indicator
+                showTyping();
+                
+                // Simulate bot thinking
+                setTimeout(() => {
+                    hideTyping();
+                    processMessage(message);
+                }, 1000 + Math.random() * 2000);
+            }
+        }
+        
+        // Send quick message from button
+        function sendQuickMessage(message) {
+            // Add user message to chat
+            addMessage(message, "user");
+            
+            // Show typing indicator
+            showTyping();
+            
+            // Simulate bot thinking
+            setTimeout(() => {
+                hideTyping();
+                processMessage(message);
+            }, 1000 + Math.random() * 2000);
+        }
+        
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messagesDiv = document.getElementById("messages");
+            const messageDiv = document.createElement("div");
+            
+            messageDiv.className = `message ${sender}-message text-white p-3 max-w-xs ${sender === "user" ? "ml-auto" : ""}`;
+            messageDiv.innerHTML = `<p>${text}</p>`;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTyping() {
+            document.getElementById("typing-indicator").classList.remove("hidden");
+            document.getElementById("messages").scrollTop = document.getElementById("messages").scrollHeight;
+        }
+        
+        // Hide typing indicator
+        function hideTyping() {
+            document.getElementById("typing-indicator").classList.add("hidden");
+        }
+        
+        // Process user message and generate response
+        function processMessage(message) {
+            message = message.toLowerCase();
+            
+            if (message.includes("hello") || message.includes("hi") || message.includes("hey")) {
+                addMessage("Hello! Welcome to Brew Haven. How can I assist you with your coffee needs today?", "bot");
+            } 
+            else if (message.includes("hour") || message.includes("open") || message.includes("close")) {
+                const response = `Our opening hours are:<br>
+                <strong>Weekdays:</strong> ${coffeeShop.hours.weekdays}<br>
+                <strong>Weekends:</strong> ${coffeeShop.hours.weekends}`;
+                addMessage(response, "bot");
+            } 
+            else if (message.includes("special") || message.includes("deal") || message.includes("promo")) {
+                const today = new Date().toLocaleString('en-us', { weekday: 'long' });
+                const special = coffeeShop.specials[today];
+                addMessage(`Today is ${today}! Our special is: <strong>${special}</strong>`, "bot");
+            } 
+            else if (message.includes("menu") || message.includes("drink") || message.includes("order")) {
+                let menuItems = "<strong>Our Coffee Menu:</strong><br>";
+                for (const [item, price] of Object.entries(coffeeShop.menu)) {
+                    menuItems += `- ${item}: ${price}<br>`;
+                }
+                addMessage(menuItems, "bot");
+            } 
+            else if (message.includes("vegan") || message.includes("dairy-free") || message.includes("plant-based")) {
+                const response = `We offer these vegan options:<br>${coffeeShop.veganOptions.join("<br>")}`;
+                addMessage(response, "bot");
+            } 
+            else if (message.includes("location") || message.includes("address") || message.includes("where")) {
+                addMessage(`We're located at:<br><strong>${coffeeShop.location}</strong><br>Come visit us!`, "bot");
+            } 
+            else if (message.includes("thank") || message.includes("thanks")) {
+                addMessage("You're very welcome! Enjoy your coffee experience at Brew Haven. ☕", "bot");
+            } 
+            else {
+                addMessage("I'm not sure I understand. Could you ask about our menu, hours, or specials?", "bot");
+            }
+        }
+        
+        // Quick action functions
+        function showMenu() {
+            sendQuickMessage("Show me the menu");
+        }
+        
+        function showLocation() {
+            sendQuickMessage("What's your location?");
+        }
+        
+        function showRewards() {
+            addMessage("Our rewards program gives you 1 star for every $10 spent. Earn 15 stars to get a free drink of your choice!", "bot");
+        }
+    </script>
+</body>
+</html>
